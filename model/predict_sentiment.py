@@ -6,19 +6,17 @@ import pickle
 import os
 nlp = spacy.load('en')
 
-model_dir = '/home/cdsw/model/'
+model_dir = '../model/'
+vocab_file_path = model_dir+'/vocab_index.pkl'
+model_file_path = model_dir+'/rnn_binary_pretrain_model.pt'
 
-#first look for vocab that came from experiments
-if os.path.exists('/home/cdsw/vocab_index.pkl'):
-  vocab_file_path = '/home/cdsw/vocab_index.pkl' 
-else:
-  vocab_file_path = model_dir+'/vocab_index.pkl'
 
-#first look for model that came from experiments
-if os.path.exists('/home/cdsw/rnn_binary_pretrain_model.pt'):
-  model_file_path = '/home/cdsw/rnn_binary_pretrain_model.pt'
-else:
-  model_file_path = model_dir+'/rnn_binary_pretrain_model.pt'
+##LOAD FROM S3
+if no os.path.exists(vocab_file_path):
+    s
+
+vocab_file_path = model_dir+'/vocab_index.pkl'
+model_file_path = model_dir+'/rnn_binary_pretrain_model.pt'
 
 
 # model
