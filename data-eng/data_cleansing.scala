@@ -1,87 +1,31 @@
-//Project: Airline Sentiment 
-//Author: Michael Gregory
-//Description: Nightly data processing to
-// - read from downloaded, data-stamped raw files
-// - anonymize the tweeter's name
-// - output as csv for model fitting
-
-
-//val hdfsDataDir = "hdfs:///tmp/airline-sentiment/incoming/"
+//import org.apache.spark.sql._
+//spark.sql("show databases").show()
+//spark.sql("use raw")
+//spark.sql("show tables").show()
+//spark.sql("select * from project1_lz limit 10").show()
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql._
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.SparkSession
 
-import scala.util.{Try, Success, Failure}
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.fs.FileUtil
-import org.apache.hadoop.fs.FileAlreadyExistsException
-import org.apache.hadoop.fs.FileStatus
-import org.apache.spark.sql.{DataFrame, Column}
+object Anonymize {
+  //Logger.getLogger("org").setLevel(Level.WARN)
+  //Logger.getLogger("akka").setLevel(Level.WARN)
+  def main(args: Array[String])
+    val spark = SparkSession.builder.appName("anonymize").getOrCreate()
 
-object Airline {
-  Logger.getLogger("org").setLevel(Level.WARN)
-  Logger.getLogger("akka").setLevel(Level.WARN)
-  def main(args: Array[String]): Unit = {
-    val isLocal = true
-    val spark = if (isLocal) {
-      SparkSession.builder
-        .master("local")
-        .appName("my-spark-app")
-        .config("spark.some.config.option", "config-value")
-        .config("spark.driver.host", "127.0.0.1")
-        .config("spark.sql.parquet.compression.codec", "gzip")
-        //.enableHiveSupport()
-        .getOrCreate()
-    } else {
-      SparkSession.builder
-        .appName("my-spark-app")
-        .config("spark.some.config.option", "config-value")
-        //.enableHiveSupport()
-        .getOrCreate()
-    }
-      import spark.implicits._
-    val conf = spark.sparkContext.hadoopConfiguration
-    val landingDir = args(0) //<input_dir>
-    val completeDir = args(1) //complete_dir>
+    val input_s3_uri = args(0) 
+    //val input_s3_uri = "s3://project1-lz/upload/Tweets.csv"
+    val file_name = input_s3_uri.split("//*").last.split("\\.")(0)
+    val output_s3_uri = args(1) 
+    //val output_s3_uri = "s3://project1-lz/raw/"
 
-    val df =spark.read.option("header", true).csv("input_folder")
+    val df = spark.read.option("header", true).csv(input_s3_uri)
 
-    //using md5. md5 might too long
-   /*
-   val dfAnnomd5 =  df.withColumn("annonym",md5($"name")) //hashing the name
-     .select("annonym", "tweet_id", "airline_sentiment","text")
-*/
-    //crc return bigint
+    //replace each tweeters name with crc bigint
+    val dfAnnocrc =  df.withColumn("annonym",crc32($"name")).select("annonym", "tweet_id", "airline_sentiment","text")
+    dfAnnocrc.write.mode("append").option("header", true).csv(output_s3_uri.concat(file_name).concat("-anon"))
 
-    val dfAnnocrc =  df.withColumn("annonym",crc32($"name")) //hashing the name
-      .select("annonym", "tweet_id", "airline_sentiment","text")
-    dfAnnocrc.write.option("header", true).csv("data/csv1")
-
-    println("=================move file into complete folder================")
-    val src:Path = new org.apache.hadoop.fs.Path(landingDir)
-    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
-    if (!fs.exists(new Path(completeDir))) fs.mkdirs(new Path(completeDir))
-    val dst:Path = new Path(completeDir)
-    val dstFs =FileSystem.get(dst.toUri,conf)
-    val srcFs =FileSystem.get(src.toUri,conf)
-      val status:Array[FileStatus] = fs.listStatus(new Path(landingDir))
-      if (status.length>0) {
-        status.foreach(x => {
-          FileUtil.copy(srcFs,
-            x.getPath,
-            dstFs,
-            dst,
-            true, conf)
-
-        }
-        )
-        println("processed "+  status.length +" files")}
-      else{
-        println("No Files Found !!")
-      }
+    //spark.read.option("header", true).csv(input_s3_uri).withColumn("annonym",crc32($"name")).select("annonym", "tweet_id", "airline_sentiment","text").write.mode("append").option("header", true).csv(output_s3_uri.concat(file_name).concat("-anon"))
 
   }
 
