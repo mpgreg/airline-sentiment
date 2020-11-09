@@ -1,4 +1,4 @@
-name := "HelloWorld"
+name := "Anonymize"
 version := "0.1.0"
 scalaVersion := "2.11.12"
 
