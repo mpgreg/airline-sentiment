@@ -4,7 +4,7 @@
 //spark.sql("show tables").show()
 //spark.sql("select * from project1_lz limit 10").show()
 
-import org.apache.log4j.{Level, Logger}
+//import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 
 object Anonymize {
@@ -19,14 +19,11 @@ object Anonymize {
     val output_s3_uri = args(1) 
     //val output_s3_uri = "s3://project1-lz/raw/"
 
-    val df = spark.read.option("header", true).csv(input_s3_uri)
-
+    //val df = spark.read.option("header", true).csv(input_s3_uri)
     //replace each tweeters name with crc bigint
-    val dfAnnocrc =  df.withColumn("annonym",crc32($"name")).select("annonym", "tweet_id", "airline_sentiment","text")
-    dfAnnocrc.write.mode("append").option("header", true).csv(output_s3_uri.concat(file_name).concat("-anon"))
+    //val dfAnnocrc =  df.withColumn("annonym",crc32($"name")).select("annonym", "tweet_id", "airline", "airline_sentiment","text")
+    //dfAnnocrc.write.mode("append").option("header", true).csv(output_s3_uri.concat(file_name).concat("-anon"))
 
-    //spark.read.option("header", true).csv(input_s3_uri).withColumn("annonym",crc32($"name")).select("annonym", "tweet_id", "airline_sentiment","text").write.mode("append").option("header", true).csv(output_s3_uri.concat(file_name).concat("-anon"))
-
-  }
+    spark.read.option("header", true).csv(input_s3_uri).withColumn("annonym",crc32($"name")).select("annonym", "tweet_id", "airline", "airline_sentiment","text").write.mode("append").parquet(output_s3_uri.concat(file_name).concat("-anon"))
 
 }
