@@ -3,14 +3,4 @@ torch
 torchtext==0.3.1
 spacy
 sklearn
-umap
-umap-learn
-holoviews
-bokeh
-dash
-dash_ui
-ipython
-chardet
-certifi
-requests
 awswrangler
