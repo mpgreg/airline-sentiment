@@ -9,3 +9,4 @@ bokeh==1.2.0
 #certifi
 #requests
 awswrangler
+zappa==0.50.0
